@@ -1,0 +1,2 @@
+CREATE TABLE IF NOT EXISTS person_aliases (id uuid PRIMARY KEY, family_id uuid NOT NULL, person_id uuid NOT NULL, alias text NOT NULL, claim_id uuid NOT NULL UNIQUE, FOREIGN KEY(family_id,person_id) REFERENCES people(family_id,id) ON DELETE CASCADE, FOREIGN KEY(family_id,claim_id) REFERENCES claims(family_id,id) ON DELETE CASCADE);
+CREATE INDEX IF NOT EXISTS aliases_family ON person_aliases(family_id,person_id);
