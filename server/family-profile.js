@@ -51,3 +51,21 @@ export function registerProfileRoutes(app,db,base){
   res.json({ok:true});
  });
 }
+
+export const storytellerFields={
+ person_id:z.string().uuid().optional(),
+ new_name:nameFields.name.optional(),
+ myself:z.literal(true).optional()
+};
+export async function selectStoryteller(q,family,user,b){
+ if([b.person_id,b.new_name,b.myself].filter(Boolean).length!==1)fail(400,'Choose one storyteller.');
+ if(b.person_id)return (await within(q,'people',family,b.person_id)).id;
+ if(b.myself){
+  await q('SELECT id FROM accounts WHERE id=$1 FOR UPDATE',[user.id]);
+  const own=await selfProfile(q,family,user.id);
+  if(own)return own.id;
+ }
+ const person=id();
+ await q('INSERT INTO people(id,family_id,name,linked_account_id) VALUES($1,$2,$3,$4)',[person,family,b.myself?user.name:b.new_name,b.myself?user.id:null]);
+ return person;
+}

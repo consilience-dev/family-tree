@@ -41,7 +41,7 @@ test('tree presentation keeps partners in the same visual generation',()=>{
 });
 test('historian rejects model citations outside the retrieved evidence set',async()=>{
  const {db,post,base,person}=await fixture();const originalFetch=globalThis.fetch;
- try{const i=(await post(base+'/interviews',{title:'Evidence',language:'en',consent:true,person_id:person})).body.id;await post(base+'/interviews/'+i+'/passages',{text:'We lived in Amritsar.',client_id:'one'});process.env.OPENAI_API_KEY='test-placeholder';globalThis.fetch=async()=>new Response(JSON.stringify({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify({answer:'An unsupported answer',citations:[id()]})}]}]}),{status:200});
+ try{const i=(await post(base+'/interviews',{title:'Evidence',language:'en',consent:true,person_id:person})).body.id;await post(base+'/interviews/'+i+'/passages',{text:'We lived in Amritsar.',client_id:'one'});process.env.OPENAI_API_KEY='test-placeholder';globalThis.fetch=async()=>new Response(JSON.stringify({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify({answer:'An unsupported answer',citations:[id()],view:'stories',focus_id:null,connection_ids:[]})}]}]}),{status:200});
  const r=await post(base+'/historian',{question:'Where did we live?',view:'stories'});assert.equal(r.status,502,r.text);assert.match(r.body.error,/invalid source/);
  }finally{globalThis.fetch=originalFetch;delete process.env.OPENAI_API_KEY;await db.close();}
 });
@@ -126,4 +126,36 @@ test('guided Punjabi questions resume, accept prepared questions and preserve sh
   const claim=(await db.q('SELECT * FROM claims')).rows[0];
   assert.deepEqual([claim.status,claim.predicate,claim.passage_id],['pending','birth_place',answer.id]);
  }finally{globalThis.fetch=originalFetch;delete process.env.OPENAI_API_KEY;await db.close();}
+});
+
+test('historian builds a tree for an alias and follows the same person into a sourced timeline',async()=>{
+ const {db,post,base,person,f}=await fixture();try{
+  await db.q("UPDATE people SET aliases=ARRAY['Bapu'] WHERE id=$1",[person]);
+  const s=(await post(base+'/interviews',{person_id:person,title:'Bapu remembers',language:'en',consent:true})).body;
+  const p=(await post(base+'/interviews/'+s.id+'/passages',{text:'I went to Jaipur in 1973.',client_id:'one'})).body;
+  const c=id();
+  await db.q("INSERT INTO claims(id,family_id,interview_id,passage_id,quote,kind,subject_name,predicate,value,certainty,status,subject_id) VALUES($1,$2,$3,$4,'I went to Jaipur in 1973.','event','Amar Singh','1973','Moved to Jaipur','stated','accepted',$5)",[c,f,s.id,p.id,person]);
+  await db.q("INSERT INTO events VALUES($1,$2,$3,'Moved to Jaipur','1973',$4)",[id(),f,person,c]);
+  const tree=(await post(base+'/historian',{question:'Show Bapu’s family tree'}).expect(200)).body;
+  assert.equal(tree.component.type,'tree');assert.equal(tree.component.root,person);
+  const timeline=(await post(base+'/historian',{question:'And his timeline?',focus_id:tree.focus_id,previous_sources:tree.citations}).expect(200)).body;
+  assert.equal(timeline.component.type,'timeline');assert.equal(timeline.component.events[0].person_id,person);assert.equal(timeline.sources[0].id,p.id);
+  await post(base+'/historian',{question:'Tell me about him',focus_id:id()}).expect(404);
+  await post(base+'/historian',{question:'This interview?',interview_id:id()}).expect(404);
+ }finally{await db.close();}
+});
+test('interviews accept a new storyteller or the signed-in member without a separate profile setup',async()=>{
+ const {db,post,base,app}=await fixture();try{
+  const start={title:'My story',language:'en',consent:true,myself:true};
+  const self=(await post(base+'/interviews',start).expect(200)).body;
+  assert.equal(self.person_id,self.interviewer_person_id);
+  assert.equal((await post(base+'/interviews',start)).body.person_id,self.person_id);
+  await post(base+'/interviews',{...start,new_name:'Another person'}).expect(400);
+  const r=await post(base+'/guest-links',{kind:'interview',new_name:'Jasbir',prepared_questions:['Which orchard did you visit?']}).expect(200);
+  const token=new URL(r.body.url).hash.split('.')[1],path='/guest/'+r.body.id;
+  const guest=request.agent(app),send=(suffix,body)=>guest.post('/api'+path+suffix).set('Origin',origin).send(body);
+  await send('/open',{token}).expect(200);await send('/start',{consent:true,language:'pa',audio_consent:false,voice_consent:false}).expect(200);
+  const session=(await guest.get('/api'+path+'/interview')).body.session;
+  assert.equal(session.person_name,'Jasbir');assert.deepEqual(session.prepared_questions,['Which orchard did you visit?']);
+ }finally{await db.close();}
 });

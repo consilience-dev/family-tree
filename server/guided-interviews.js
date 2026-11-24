@@ -1,11 +1,11 @@
 import {z} from 'zod';
 import {topics} from '../shared/guide.js';
 import {id,within,fail,member} from './security.js';
-import {addConnection,selfProfile,relationship} from './family-profile.js';
+import {addConnection,selfProfile,relationship,storytellerFields,selectStoryteller} from './family-profile.js';
 import {response} from './models.js';
 
 const startSchema=z.object({
- person_id:z.string().uuid(), title:z.string().trim().min(1).max(160),
+ ...storytellerFields, title:z.string().trim().min(1).max(160),
  language:z.enum(['en','pa','hi','ur']), consent:z.literal(true),
  voice_consent:z.boolean().default(false), audio_consent:z.boolean().default(false),
  prepared_questions:z.array(z.string().trim().min(1).max(500)).max(10).default([]),
@@ -36,8 +36,8 @@ export function registerGuidedInterviews(app,db,base,route,write){
   const b=startSchema.parse(req.body),family=req.params.family;
   const session=await db.tx(async q=>{
    await member(q,family,req.user.id,['owner','editor']);
-   await within(q,'people',family,b.person_id);
-   return startInterview(q,family,req.user.id,b);
+   const person_id=await selectStoryteller(q,family,req.user,b);
+   return startInterview(q,family,req.user.id,{...b,person_id});
   });
   res.json(session);
  });

@@ -1,4 +1,5 @@
 import express from 'express';
+import {storytellerFields,selectStoryteller} from './family-profile.js';
 import {z} from 'zod';
 import {token,hash,id,member,within,fail} from './security.js';
 import {startInterview} from './guided-interviews.js';
@@ -65,7 +66,7 @@ export function registerGuestLinks(app,db,base,origin){
    if(l.kind!=='interview')unavailable();
    if(l.interview_id)return;
    const p=await within(q,'people',l.family_id,l.person_id);
-   const session=await startInterview(q,l.family_id,l.created_by,{...b,title:p.name+'’s story',person_id:p.id,prepared_questions:[]},true);
+   const session=await startInterview(q,l.family_id,l.created_by,{...b,title:p.name+'’s story',person_id:p.id,prepared_questions:l.prepared_questions},true);
    await q('UPDATE guest_links SET interview_id=$2,browser_hash=$3 WHERE id=$1',[l.id,session.id,hash(cookie(req)[1])]);
   });
   res.json({ok:true});
@@ -104,7 +105,7 @@ export function registerGuestLinks(app,db,base,origin){
  });
  app.post(base+'/guest-links',async(req,res)=>{
   const b=z.discriminatedUnion('kind',[
-   z.object({kind:z.literal('interview'),person_id:uuid}),
+   z.object({kind:z.literal('interview'),...storytellerFields,prepared_questions:z.array(z.string().trim().min(1).max(500)).max(10).default([])}),
    z.object({kind:z.literal('story'),interview_id:uuid,permission:z.literal(true),share_audio:z.boolean().default(false)})
   ]).parse(req.body);
   const raw=token(),key=id(),family=req.params.family;
@@ -115,9 +116,9 @@ export function registerGuestLinks(app,db,base,origin){
     const i=await within(q,'interviews',family,b.interview_id,true);
     if(i.status!=='complete'||(b.share_audio&&!i.audio_consent))fail(400,'Choose a completed story with the required consent.');
     person=i.person_id;
-   }else await within(q,'people',family,person);
-   await q(`INSERT INTO guest_links(id,family_id,person_id,interview_id,kind,token_hash,created_by,share_audio,expires_at)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,now()+interval '7 days')`,[key,family,person,b.interview_id||null,b.kind,hash(raw),req.user.id,b.share_audio||false]);
+   }else person=await selectStoryteller(q,family,req.user,b);
+   await q(`INSERT INTO guest_links(id,family_id,person_id,interview_id,kind,token_hash,created_by,share_audio,prepared_questions,expires_at)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,now()+interval '7 days')`,[key,family,person,b.interview_id||null,b.kind,hash(raw),req.user.id,b.share_audio||false,b.prepared_questions||[]]);
   });
   res.json({id:key,url:origin+'/#visit='+key+'.'+raw});
  });

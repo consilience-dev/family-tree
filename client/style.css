@@ -73,3 +73,48 @@
 .guest-brand {padding:1.5rem 0;font-size:1.3rem;font-weight:700;color:#345344}
 .guest-page form>.check-field {margin:1rem 0}
 .guest-page article>.message {margin:.85rem 0}
+
+/* Interview-first workspace */
+.focused-app {min-height:100vh;background:#faf9f5;color:#233e32}
+.focus-header {min-height:74px;padding:12px clamp(18px,5vw,78px);display:flex;align-items:center;gap:clamp(22px,5vw,88px);background:#fffefa;border-bottom:1px solid #dedfd5}
+.focus-header .brand {font-family:var(--serif);font-weight:600;font-size:1.6rem;letter-spacing:-.055em}
+.focus-header nav {display:flex;align-self:stretch;gap:24px;align-items:center}
+.focus-header nav button,.account-menu button {border:0;background:transparent;padding:9px 0;color:#526357;font-size:1rem}
+.focus-header nav button[aria-current] {color:#264e3b;box-shadow:0 2px #426b4d;font-weight:650}
+.focus-account {margin-left:auto;display:flex;align-items:center;gap:15px}
+.account-menu {position:relative}.account-menu summary {cursor:pointer;list-style:none;display:flex;align-items:center;gap:4px}.account-menu summary::-webkit-details-marker {display:none}
+.account-menu>div {position:absolute;right:0;top:calc(100% + 12px);z-index:20;width:min(260px,85vw);padding:18px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 34px #203d301b;display:grid;gap:8px}
+.account-menu button {text-align:left}.focus-shell>.main-content {max-width:1120px;width:100%;margin:auto;padding:clamp(24px,5vw,64px) clamp(16px,4vw,58px)}
+.interview-home,.historian-conversation {max-width:780px;margin:auto}
+.interview-intro {padding:0 0 clamp(28px,4vw,48px)}
+.home-mic,.historian-mark {display:inline-grid;place-items:center;color:#2e5941;background:#e6ecdf;border-radius:13px;padding:12px}
+.interview-intro h1,.historian-conversation h1 {font:normal clamp(2.7rem,5.4vw,4.9rem)/1.03 var(--serif);letter-spacing:-.055em;margin:16px 0}
+.interview-intro>p {font-size:1.12rem;max-width:560px;line-height:1.6;color:#526356}
+.home-actions {display:flex;flex-wrap:wrap;gap:12px;margin-top:23px}
+.focused-app .button {min-height:44px;border-radius:8px}
+.home-historian {display:flex;align-items:flex-start;gap:17px;padding:clamp(18px,3vw,30px);background:#f0f3eb;border:1px solid #d7dfcd;border-radius:15px}
+.home-historian>svg {margin-top:5px;flex-shrink:0}.home-historian>div {flex:1;min-width:0}
+.home-historian h2,.home-recent h2 {font:normal 1.75rem/1.2 var(--serif);letter-spacing:-.035em}
+.home-historian p {margin:5px 0 15px;color:#536653}.home-historian .text-button {margin-top:8px}
+.question-box {display:flex;align-items:center;gap:4px;padding:5px 6px;background:#fff;border:1px solid #becaba;border-radius:9px}
+.question-box input {border:0;background:transparent;padding:9px;min-width:0;font-size:1rem}
+.question-box button {border:0;background:#2b503b;color:white;width:40px;height:40px;flex-shrink:0;border-radius:6px}
+.home-recent {margin-top:34px}.home-recent .section-heading {padding:0 0 10px}
+.home-recent .interview-row {background:transparent;padding:13px 0;border-bottom:1px solid #dde1d6}
+.review-link {margin-top:16px}
+.conversation-title {display:flex;align-items:center;justify-content:space-between;gap:12px}
+.conversation-title>div {display:flex;align-items:center;gap:14px}
+.conversation-title h1 {font-size:clamp(2.2rem,4vw,3.6rem)}
+.historian-turn {background:white;border:1px solid var(--line);border-radius:14px;margin:20px 0;padding:clamp(16px,3vw,28px)}
+.historian-turn h2 {font:normal 1.7rem/1.35 var(--serif)}.historian-turn .answer-text {margin:13px 0 19px;white-space:pre-line}
+.historian-sources {margin:18px 0}.historian-sources h3 {font-size:.95rem;color:#5b705c}.historian-turn .source-quote {width:100%;text-align:left}
+.historian-composer {margin-top:20px}.past-turn {padding:12px 0;border-bottom:1px solid var(--line)}.past-turn summary, .setup-form summary,.guide-panel summary {cursor:pointer;font-weight:600;padding:5px 0}
+.setup-form {display:grid;gap:13px}.setup-form .field {margin:0}.setup-form details .field {margin-top:10px}
+.setup-form fieldset {margin:0;padding:12px 15px;border:1px solid var(--line);border-radius:8px}.setup-form .check-field {margin:9px 0}.setup-form legend {font-weight:600}
+.focused-app .archive-tools .button-row {gap:18px}.guide-panel .field {margin-top:15px}
+@media(max-width:640px){
+ .focus-header {padding:12px 16px;gap:14px;flex-wrap:wrap}.focus-header nav {order:3;width:100%;gap:23px}.focus-header nav button {padding:5px 0}
+ .focus-shell>.main-content {padding:24px 16px}.wide-break {display:none}.home-historian {gap:10px}.home-historian>svg {display:none}
+ .home-actions .button {flex:1}.home-recent .interview-row {row-gap:7px}.conversation-title {align-items:flex-start;flex-direction:column}
+ .historian-mark {padding:8px}
+}
